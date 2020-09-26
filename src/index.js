@@ -1,42 +1,48 @@
-import { GraphQLServer } from "graphql-yoga";
+import { GraphQLServer } from 'graphql-yoga'
 
+// Scalar types - String, Boolean, Int, Float, ID
+
+// Demo user data
 const users = [{
     id: '1',
     name: 'Andrew',
-    email: 'Andrew@email.com',
+    email: 'andrew@example.com',
     age: 27
 }, {
     id: '2',
     name: 'Sarah',
-    email: 'Sarah@email.com'
+    email: 'sarah@example.com'
 }, {
     id: '3',
     name: 'Mike',
-    email: 'Mike@email.com'
+    email: 'mike@example.com'
 }]
 
 const posts = [{
     id: '10',
     title: 'GraphQL 101',
     body: 'This is how to use GraphQL...',
-    published: true
+    published: true,
+    author: '1'
 }, {
     id: '11',
     title: 'GraphQL 201',
     body: 'This is an advanced GraphQL post...',
-    published: false
+    published: false,
+    author: '1'
 }, {
     id: '12',
-    title: 'Line chat bot',
+    title: 'Programming Music',
     body: '',
-    published: false
+    published: false,
+    author: '2'
 }]
 
-// type definitions (schema)
+// Type definitions (schema)
 const typeDefs = `
     type Query {
-        posts(query: String): [Post!]!
         users(query: String): [User!]!
+        posts(query: String): [Post!]!
         me: User!
         post: Post!
     }
@@ -46,6 +52,7 @@ const typeDefs = `
         name: String!
         email: String!
         age: Int
+        posts: [Post!]!
     }
 
     type Post {
@@ -53,6 +60,7 @@ const typeDefs = `
         title: String!
         body: String!
         published: Boolean!
+        author: User!
     }
 `
 
@@ -60,40 +68,53 @@ const typeDefs = `
 const resolvers = {
     Query: {
         users(parent, args, ctx, info) {
-            if(!args.query) return users
+            if (!args.query) {
+                return users
+            }
 
             return users.filter((user) => {
                 return user.name.toLowerCase().includes(args.query.toLowerCase())
             })
         },
-
-        posts(parent, args, ctx, info){
-            if(!args.query) return posts
+        posts(parent, args, ctx, info) {
+            if (!args.query) {
+                return posts
+            }
 
             return posts.filter((post) => {
                 const isTitleMatch = post.title.toLowerCase().includes(args.query.toLowerCase())
                 const isBodyMatch = post.body.toLowerCase().includes(args.query.toLowerCase())
-
                 return isTitleMatch || isBodyMatch
             })
         },
-
         me() {
             return {
-                id: '123456789',
-                name: 'wanchalerm suksawat',
-                email: 'wanchalerm@email.com',
-                age: 24
+                id: '123098',
+                name: 'Mike',
+                email: 'mike@example.com'
             }
         },
-
         post() {
             return {
-                id: '123456789',
-                title: 'Simple GQL',
-                body: 'ez right?',
-                published: true
+                id: '092',
+                title: 'GraphQL 101',
+                body: '',
+                published: false
             }
+        }
+    },
+    Post: {
+        author(parent, args, ctx, info) {
+            return users.find((user) => {
+                return user.id === parent.author
+            })
+        }
+    },
+    User: {
+        posts(parent, args, ctx, info){
+            return posts.filter((post) => {
+                return post.author === parent.id
+            })
         }
     }
 }
@@ -104,6 +125,5 @@ const server = new GraphQLServer({
 })
 
 server.start(() => {
-    console.log("The server is UP!");
+    console.log('The server is up!')
 })
-
