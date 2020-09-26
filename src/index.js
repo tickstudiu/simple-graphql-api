@@ -1,10 +1,42 @@
 import { GraphQLServer } from "graphql-yoga";
 
+const users = [{
+    id: '1',
+    name: 'Andrew',
+    email: 'Andrew@email.com',
+    age: 27
+}, {
+    id: '2',
+    name: 'Sarah',
+    email: 'Sarah@email.com'
+}, {
+    id: '3',
+    name: 'Mike',
+    email: 'Mike@email.com'
+}]
+
+const posts = [{
+    id: '10',
+    title: 'GraphQL 101',
+    body: 'This is how to use GraphQL...',
+    published: true
+}, {
+    id: '11',
+    title: 'GraphQL 201',
+    body: 'This is an advanced GraphQL post...',
+    published: false
+}, {
+    id: '12',
+    title: 'Line chat bot',
+    body: '',
+    published: false
+}]
+
 // type definitions (schema)
 const typeDefs = `
     type Query {
-        greeting(name: String): String!
-        add(x: Float!, y: Float!): Float!
+        posts(query: String): [Post!]!
+        users(query: String): [User!]!
         me: User!
         post: Post!
     }
@@ -27,16 +59,23 @@ const typeDefs = `
 // Resolvers
 const resolvers = {
     Query: {
-        greeting(parent, args, ctx, info) {
-            if  (args.name){
-                return `Hello! ${args.name}`
-            }
+        users(parent, args, ctx, info) {
+            if(!args.query) return users
 
-            return `Hello!`
+            return users.filter((user) => {
+                return user.name.toLowerCase().includes(args.query.toLowerCase())
+            })
         },
 
-        add(parent, args, ctx, info) {
-            return args.x + args.y
+        posts(parent, args, ctx, info){
+            if(!args.query) return posts
+
+            return posts.filter((post) => {
+                const isTitleMatch = post.title.toLowerCase().includes(args.query.toLowerCase())
+                const isBodyMatch = post.body.toLowerCase().includes(args.query.toLowerCase())
+
+                return isTitleMatch || isBodyMatch
+            })
         },
 
         me() {
